@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Spring MVC Config -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+	xsi:schemaLocation="
+            http://www.springframework.org/schema/beans 
+            http://www.springframework.org/schema/beans/spring-beans.xsd 
+            http://www.springframework.org/schema/context 
+            http://www.springframework.org/schema/context/spring-context.xsd 
+            http://www.springframework.org/schema/mvc
+            http://www.springframework.org/schema/mvc/spring-mvc.xsd 
+            http://www.springframework.org/schema/data/mongo 
+			http://www.springframework.org/schema/data/mongo/spring-mongo.xsd 
+            ">
+
+	<mvc:annotation-driven/>
+	
+	<context:component-scan base-package="org.howsun.uploader,org.howsun.gridfs"/>
+	
+	<!-- Service -->
+	<context:property-placeholder location="file:/opt/lizi/config.properties"/>
+	
+	<!-- MongoDB -->
+	<mongo:mongo-client id="mongo" host="${mongodb.host}" port="${mongodb.port}"><!--  credentials="${mongodb.db}:${mongodb.username}@${mongodb.password}" -->
+		<mongo:client-options 
+			min-connections-per-host="2"
+			connections-per-host="5"
+			connect-timeout="5000"
+			max-wait-time="120000"
+			heartbeat-frequency="2000"
+			heartbeat-connect-timeout="10000"
+			max-connection-life-time="3000"
+			socket-keep-alive="true"
+			socket-timeout="30000"
+			threads-allowed-to-block-for-connection-multiplier="2"
+			write-concern="SAFE"/>
+	</mongo:mongo-client>
+	<mongo:db-factory id="mongoDbFactory" mongo-ref="mongo" dbname="${mongodb.db}" />
+	<mongo:template db-factory-ref="mongoDbFactory"/>
+	<mongo:mapping-converter id="mappingConverter" db-factory-ref="mongoDbFactory"/>
+	<mongo:gridFsTemplate db-factory-ref="mongoDbFactory" converter-ref="mappingConverter"/>
+	
+	<!-- MVC层 -->
+	
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver" p:prefix="/WEB-INF/view/" p:suffix=".jsp"/>
+	
+	<!-- 上传文件 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+    	<property name="defaultEncoding" value="UTF-8"/>
+    	<!-- Set the maximum allowed size (in bytes) before uploads are refused. -1 indicates no limit (the default). -->
+    	<property name="maxUploadSize" value="99999999999"/>
+    	<property name="maxInMemorySize" value="20480000"/>
+    	<property name="uploadTempDir" value="temp"/>
+    	<!-- <property name="resolveLazily" value="true"/> -->
+    </bean>
+	
+	<!-- Spring MVC处理静态资源的两种方式 -->
+	<!-- 
+	<mvc:default-servlet-handler/>
+	 -->
+	<mvc:resources mapping="/pic/**" location="/pic/"/>
+</beans>
